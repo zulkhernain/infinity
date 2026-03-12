@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ConvoBI · conversational dashboards</title>
+  <!-- Fonts, icons, libs -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f4f7fc;
+      color: #1e293b;
+      line-height: 1.5;
+      padding: 2rem 1.5rem;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    /* header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .header h1 {
+      font-weight: 600;
+      font-size: 1.8rem;
+      background: linear-gradient(145deg, #0f2b4b, #1e4a6f);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .header h1 i { color: #2563eb; -webkit-text-fill-color: initial; background: none; }
+    .badge {
+      background: white;
+      padding: 0.4rem 1rem;
+      border-radius: 40px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+      border: 1px solid #e2e8f0;
+    }
+    .badge i { color: #2563eb; margin-right: 6px; }
+
+    /* upload card */
+    .upload-panel {
+      background: white;
+      border-radius: 24px;
+      padding: 1.5rem 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 8px 20px -6px rgba(0, 20, 40, 0.1);
+      border: 1px solid #eef2f6;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .upload-area {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .file-label {
+      background: #f0f4fe;
+      padding: 0.7rem 1.4rem;
+      border-radius: 60px;
+      font-weight: 500;
+      font-size: 0.9rem;
+      color: #1e4a6f;
+      cursor: pointer;
+      transition: 0.2s;
+      border: 1px dashed #9bb7d4;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .file-label:hover { background: #e3ebf9; }
+    #file-info { font-size: 0.9rem; color: #475569; }
+    .reset-data-btn {
+      background: none;
+      border: 1px solid #cbd5e1;
+      padding: 0.5rem 1.2rem;
+      border-radius: 30px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .reset-data-btn:hover { background: #f1f5f9; }
+
+    /* input row */
+    .query-section {
+      background: white;
+      border-radius: 40px;
+      padding: 0.4rem 0.4rem 0.4rem 2rem;
+      display: flex;
+      align-items: center;
+      box-shadow: 0 10px 25px -8px rgba(0,35,70,0.15);
+      margin-bottom: 1.5rem;
+      border: 1px solid #dde7f0;
+    }
+    .query-section i { color: #64748b; font-size: 1.2rem; }
+    #query-input {
+      flex: 1;
+      border: none;
+      padding: 1rem 0.8rem;
+      font-size: 1rem;
+      background: transparent;
+      outline: none;
+      font-family: 'Inter', sans-serif;
+    }
+    #submit-btn {
+      background: #0f2b4b;
+      border: none;
+      color: white;
+      padding: 0.9rem 2.2rem;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      letter-spacing: 0.3px;
+      box-shadow: 0 8px 14px -8px #0f2b4b80;
+    }
+    #submit-btn:hover { background: #1e3f60; }
+    #submit-btn:disabled { opacity: 0.5; pointer-events: none; }
+
+    /* sample chips */
+    .sample-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      margin-bottom: 2rem;
+    }
+    .sample-chip {
+      background: white;
+      border: 1px solid #dce5ef;
+      padding: 0.6rem 1.4rem;
+      border-radius: 40px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #1e3a5f;
+      cursor: pointer;
+      transition: all 0.15s;
+      box-shadow: 0 2px 5px #eef2f6;
+    }
+    .sample-chip:hover {
+      background: #e6effa;
+      border-color: #95b3d3;
+    }
+    .sample-chip i { margin-right: 6px; color: #2c6e9c; }
+
+    /* dashboard grid */
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+      gap: 1.8rem;
+      margin: 2rem 0 1.5rem;
+      transition: 0.2s;
+    }
+    .chart-card {
+      background: white;
+      border-radius: 28px;
+      padding: 1.5rem 1.2rem 1.2rem 1.2rem;
+      box-shadow: 0 15px 30px -12px rgba(0,30,60,0.12);
+      border: 1px solid #eef4f9;
+      transition: 0.2s;
+      backdrop-filter: blur(2px);
+    }
+    .chart-title {
+      font-weight: 600;
+      margin-bottom: 1rem;
+      padding-left: 0.3rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #1a3f5c;
+      font-size: 1.1rem;
+    }
+    .chart-title i { color: #3b7fb0; font-size: 1rem; }
+    .chart-canvas-container {
+      position: relative;
+      height: 260px;
+      width: 100%;
+    }
+    canvas { display: block; max-width: 100%; }
+
+    /* loading / error */
+    .loading-spinner {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 3rem;
+      grid-column: 1 / -1;
+      color: #3b6e9e;
+    }
+    .spinner { border: 4px solid #e2ecf9; border-top: 4px solid #1e4a6f; border-radius: 50%; width: 48px; height: 48px; animation: spin 1s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .error-message {
+      background: #fff2f0;
+      border-left: 5px solid #d34f4f;
+      padding: 1rem 2rem;
+      border-radius: 60px;
+      color: #792e2e;
+      font-weight: 500;
+      margin: 1rem 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .footer-note {
+      margin-top: 3rem;
+      border-top: 1px solid #d0e0ee;
+      padding-top: 1.8rem;
+      display: flex;
+      justify-content: space-between;
+      color: #4b6589;
+      font-size: 0.9rem;
+      flex-wrap: wrap;
+    }
+    .filter-tag {
+      background: #ecf3fa;
+      border-radius: 24px;
+      padding: 0.3rem 1rem;
+      display: inline-block;
+      font-size: 0.8rem;
+      margin-right: 0.8rem;
+      color: #1d4769;
+    }
+    .filter-tag i { margin-right: 4px; }
+    #active-filters { margin: 0.5rem 0 0.2rem 0; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- header -->
+  <div class="header">
+    <h1><i class="fas fa-robot"></i> ConvoBI · instant dashboards</h1>
+    <div class="badge"><i class="fas fa-database"></i> mock sales data · Q3</div>
+  </div>
+
+  <!-- CSV upload panel -->
+  <div class="upload-panel">
+    <div class="upload-area">
+      <label for="csv-upload" class="file-label"><i class="fas fa-cloud-upload-alt"></i> Upload your own CSV</label>
+      <input type="file" id="csv-upload" accept=".csv" style="display: none;">
+      <span id="file-info"><i class="fas fa-info-circle"></i> use sample data (or upload with date,region,category,revenue,units,satisfaction)</span>
+      <button class="reset-data-btn" id="reset-data"><i class="fas fa-undo-alt"></i> reset to sample</button>
+    </div>
+    <div id="active-filters"></div>
+  </div>
+
+  <!-- query input -->
+  <div class="query-section">
+    <i class="fas fa-message" style="margin-left: 0.5rem;"></i>
+    <input type="text" id="query-input" placeholder="Ask in plain English... e.g. 'monthly sales revenue by region'" value="monthly sales revenue by region">
+    <button id="submit-btn"><i class="fas fa-sparkles"></i> Generate</button>
+  </div>
+
+  <!-- sample chips -->
+  <div class="sample-row">
+    <div class="sample-chip" data-query="monthly sales revenue by region"><i class="fas fa-chart-line"></i> monthly sales by region</div>
+    <div class="sample-chip" data-query="top 3 product categories by revenue"><i class="fas fa-chart-bar"></i> top categories</div>
+    <div class="sample-chip" data-query="customer satisfaction score by category"><i class="fas fa-star"></i> satisfaction by category</div>
+    <div class="sample-chip" data-query="market share by category (pie chart)"><i class="fas fa-chart-pie"></i> market share pie</div>
+    <div class="sample-chip" data-query="filter to only East region"><i class="fas fa-filter"></i> follow-up: filter East</div>
+  </div>
+
+  <!-- dashboard area -->
+  <div id="dashboard" class="dashboard">
+    <!-- charts injected dynamically -->
+  </div>
+  <div id="error" class="error-message" style="display: none;"></div>
+
+  <!-- footer / github placeholder -->
+  <div class="footer-note">
+    <span><i class="fab fa-github"></i> github.com/convo-bi/demo (mock prototype)</span>
+    <span><i class="far fa-clock"></i> real‑time · NL → charts</span>
+  </div>
+</div>
+
+<script>
+(function() {
+  // keep reference to uploaded CSV so we can send it to the server
+  let uploadedFile = null;
+  let chartInstances = [];
+
+  function destroyCharts() {
+    chartInstances.forEach(c => c.destroy());
+    chartInstances = [];
+  }
+
+  function renderCharts(charts) {
+    destroyCharts();
+    const dashboard = document.getElementById('dashboard');
+    document.getElementById('error').style.display = 'none';
+    dashboard.innerHTML = '';
+
+    if (!charts || charts.length === 0) {
+      document.getElementById('error').innerHTML = '<i class="fas fa-face-frown"></i> No charts to display.';
+      document.getElementById('error').style.display = 'flex';
+      return;
+    }
+
+    charts.forEach(chart => {
+      if (chart.error) {
+        const err = document.getElementById('error');
+        err.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${chart.error}`;
+        err.style.display = 'flex';
+        return;
+      }
+
+      const intent = chart;
+      const data = chart.data || [];
+
+      let labels, values;
+      if (intent.groupBy.length === 1) {
+        labels = data.map(r => r[intent.groupBy[0]]);
+        values = data.map(r => r[intent.measure]);
+      } else if (intent.groupBy.includes('month') && intent.groupBy.includes('region')) {
+        const months = [...new Set(data.map(r => r.month))].sort();
+        const regionSet = [...new Set(data.map(r => r.region))];
+        const datasetMap = {};
+        regionSet.forEach(r => (datasetMap[r] = []));
+        data.forEach(item => {
+          const idx = months.indexOf(item.month);
+          if (idx >= 0) datasetMap[item.region][idx] = item[intent.measure];
+        });
+        regionSet.forEach(r => {
+          for (let i = 0; i < months.length; i++) if (datasetMap[r][i] === undefined) datasetMap[r][i] = null;
+        });
+        renderMultiLineChart(months, regionSet, datasetMap, intent.measure, intent.title || '');
+        return;
+      } else {
+        labels = data.map(r => r[intent.groupBy[0]]);
+        values = data.map(r => r[intent.measure]);
+      }
+
+      const canvasId = 'chart-' + Date.now() + Math.random();
+      const card = document.createElement('div');
+      card.className = 'chart-card';
+      card.innerHTML = `<div class="chart-title"><i class="fas fa-chart-simple"></i> ${intent.title || ''}</div>
+                        <div class="chart-canvas-container"><canvas id="${canvasId}"></canvas></div>`;
+      dashboard.appendChild(card);
+      const ctx = document.getElementById(canvasId).getContext('2d');
+
+      let chartObj;
+      if (intent.chartType === 'pie') {
+        chartObj = new Chart(ctx, {
+          type: 'pie',
+          data: { labels, datasets: [{ data: values, backgroundColor: ['#3b82f6','#f97316','#10b981','#8b5cf6','#ec4899'] }] },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+        });
+      } else {
+        chartObj = new Chart(ctx, {
+          type: intent.chartType || 'bar',
+          data: { labels, datasets: [{ label: intent.measure, data: values, backgroundColor: '#3b82f6', borderRadius: 6 }] },
+          options: { responsive: true, maintainAspectRatio: false }
+        });
+      }
+      chartInstances.push(chartObj);
+    });
+  }
+
+  function renderMultiLineChart(months, regions, dataMap, measure, title) {
+    const dashboard = document.getElementById('dashboard');
+    const canvasId = 'line-' + Date.now() + Math.random();
+    const card = document.createElement('div');
+    card.className = 'chart-card';
+    card.innerHTML = `<div class="chart-title"><i class="fas fa-chart-line"></i> ${title}</div>
+                      <div class="chart-canvas-container"><canvas id="${canvasId}"></canvas></div>`;
+    dashboard.appendChild(card);
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    const datasets = regions.map((region, idx) => ({
+      label: region,
+      data: dataMap[region],
+      borderColor: ['#2563eb','#dc2626','#16a34a','#d97706'][idx % 4],
+      backgroundColor: 'transparent',
+      tension: 0.1,
+      pointRadius: 4
+    }));
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: { labels: months, datasets },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { tooltip: { mode: 'index' } } }
+    });
+    chartInstances.push(chart);
+  }
+
+  async function processUserQuery(queryText) {
+    const dashboardDiv = document.getElementById('dashboard');
+    const errorDiv = document.getElementById('error');
+    errorDiv.style.display = 'none';
+    dashboardDiv.innerHTML = '<div class="loading-spinner"><div class="spinner"></div>   Loading...</div>';
+    try {
+      const form = new FormData();
+      form.append('prompt', queryText);
+      if (uploadedFile) form.append('csv', uploadedFile);
+      const resp = await fetch('/api/dashboard/generate', { method: 'POST', body: form });
+      const json = await resp.json();
+      if (json.error) {
+        errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${json.error}`;
+        errorDiv.style.display = 'flex';
+        dashboardDiv.innerHTML = '';
+      } else {
+        renderCharts(json.charts || []);
+      }
+    } catch (err) {
+      errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${err.message}`;
+      errorDiv.style.display = 'flex';
+      dashboardDiv.innerHTML = '';
+    }
+  }
+
+  function resetToSample() {
+    uploadedFile = null;
+    document.getElementById('csv-upload').value = '';
+    fetch('/api/dashboard/reset', { method: 'POST' })
+      .then(r => r.json())
+      .then(() => {
+        document.getElementById('file-info').innerHTML = '<i class="fas fa-info-circle"></i> using sample sales data';
+        document.getElementById('dashboard').innerHTML = '';
+        document.getElementById('error').style.display = 'none';
+      });
+  }
+
+  document.getElementById('csv-upload').addEventListener('change', function(e) {
+    uploadedFile = e.target.files[0];
+    if (uploadedFile) {
+      document.getElementById('file-info').innerHTML = `<i class="fas fa-check-circle" style="color:#2b6e3b"></i> loaded ${uploadedFile.name}`;
+    }
+  });
+
+  document.getElementById('submit-btn').addEventListener('click', () => {
+    const query = document.getElementById('query-input').value.trim();
+    if (query) processUserQuery(query);
+  });
+
+  document.querySelectorAll('.sample-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const q = chip.getAttribute('data-query');
+      document.getElementById('query-input').value = q;
+      processUserQuery(q);
+    });
+  });
+
+  document.getElementById('reset-data').addEventListener('click', resetToSample);
+
+  window.addEventListener('load', () => {
+    processUserQuery('monthly sales revenue by region');
+  });
+})();
+</script>
+</body>
+</html>
