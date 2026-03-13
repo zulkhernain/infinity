@@ -15,6 +15,12 @@ module.exports = {
         danger: '#EF4444',
         warning: '#F59E0B',
         info: '#0EA5E9',
+        purple: '#A78BFA',
+        indigo: '#818CF8',
+        violet: '#C084FC',
+        rose: '#FB7185',
+        coral: '#FF6B6B',
+        teal: '#20C997',
       },
       fontFamily: {
         sans: [

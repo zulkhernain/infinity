@@ -12,7 +12,11 @@ interface Message {
   data?: any;
 }
 
-export default function ChatInterface() {
+interface ChatInterfaceProps {
+  onMessageSent?: () => void;
+}
+
+export default function ChatInterface({ onMessageSent }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -27,6 +31,7 @@ export default function ChatInterface() {
 
     setMessages(prev => [...prev, userMessage]);
     setLoading(true);
+    onMessageSent?.();
 
     try {
       // Send to backend API
@@ -58,19 +63,50 @@ export default function ChatInterface() {
   };
 
   return (
-    <div className="flex flex-col h-full w-full bg-white rounded-lg shadow">
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+    <div className="flex flex-col h-full w-full bg-gradient-to-b from-white/50 to-white/30">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth">
         {messages.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-gray-400">
-            <p>Start a conversation by typing a query...</p>
+          <div className="flex flex-col items-center justify-center h-full text-center">
+            <div className="text-5xl mb-4 animate-bounce">💡</div>
+            <p className="text-gray-600 font-bold text-lg">Start Your Data Journey</p>
+            <p className="text-gray-400 text-sm mt-3 max-w-xs leading-relaxed">
+              Upload a file and ask questions about your data to get started
+            </p>
+            <div className="mt-6 space-y-3">
+              <p className="text-xs font-semibold text-purple-700">💬 Try asking:</p>
+              <div className="space-y-2">
+                <div className="text-xs text-gray-600 bg-purple-50 rounded-lg px-3 py-2 border-l-2 border-purple-400">
+                  📊 "What are the sales trends?"
+                </div>
+                <div className="text-xs text-gray-600 bg-indigo-50 rounded-lg px-3 py-2 border-l-2 border-indigo-400">
+                  🎯 "Show me top performing regions"
+                </div>
+                <div className="text-xs text-gray-600 bg-cyan-50 rounded-lg px-3 py-2 border-l-2 border-cyan-400">
+                  📈 "Compare categories"
+                </div>
+              </div>
+            </div>
           </div>
         ) : (
           messages.map(msg => (
             <ChatMessage key={msg.id} message={msg} />
           ))
         )}
+        {loading && (
+          <div className="flex justify-start mb-4">
+            <div className="bg-gradient-to-r from-teal-100 to-cyan-100 rounded-lg rounded-bl-none px-4 py-3 max-w-xs shadow-lg border-l-4 border-teal-500">
+              <div className="flex gap-2">
+                <div className="w-2 h-2 bg-teal-600 rounded-full animate-bounce"></div>
+                <div className="w-2 h-2 bg-teal-600 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                <div className="w-2 h-2 bg-teal-600 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-      <ChatInput onSend={handleMessageSend} disabled={loading} />
+      <div className="border-t border-white/50 bg-white/50">
+        <ChatInput onSend={handleMessageSend} disabled={loading} />
+      </div>
     </div>
   );
 }
