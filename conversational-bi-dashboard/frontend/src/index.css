@@ -17,8 +17,11 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+html,
+body,
 #root {
   min-height: 100vh;
+  background: linear-gradient(135deg, #E6D9F5 0%, #F0E6FB 100%);
 }
 
 /* Custom scrollbar */

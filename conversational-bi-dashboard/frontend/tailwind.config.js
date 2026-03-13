@@ -8,6 +8,8 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        lavender: '#E6D9F5',
+        lavenderDark: '#D8C5E8',
         primary: '#3B82F6',
         secondary: '#10B981',
         danger: '#EF4444',
